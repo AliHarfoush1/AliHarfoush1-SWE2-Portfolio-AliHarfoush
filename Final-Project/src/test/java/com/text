@@ -1,0 +1,389 @@
+
+// ============================================
+// FILE: PaymentProcessingTest.java
+// ============================================
+package com;
+
+import main.java.com.factory.Payment;
+import main.java.com.factory.CreditCardPayment;
+import main.java.com.factory.PayPalPayment;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
+import static org.junit.jupiter.api.Assertions.*;
+
+public class PaymentProcessingTest {
+
+    private Payment creditCardPayment;
+    private Payment paypalPayment;
+
+    @BeforeEach
+    void setUp() {
+        creditCardPayment = new CreditCardPayment("1234-5678-9012-3456");
+        paypalPayment = new PayPalPayment("user@example.com");
+    }
+
+    @Test
+    void testCreditCardPayment_ValidAmount_Success() {
+        boolean result = creditCardPayment.processPayment(250.50);
+        assertTrue(result, "Valid payment should process successfully");
+    }
+
+    @Test
+    void testCreditCardPayment_NegativeAmount_Fail() {
+        boolean result = creditCardPayment.processPayment(-50.0);
+        assertFalse(result, "Negative amount payment should fail");
+    }
+
+    @Test
+    void testCreditCardPayment_ZeroAmount_Fail() {
+        boolean result = creditCardPayment.processPayment(0);
+        assertFalse(result, "Zero amount payment should fail");
+    }
+
+    @Test
+    void testPayPalPayment_ValidEmail_Success() {
+        boolean result = paypalPayment.processPayment(100.0);
+        assertTrue(result, "Valid PayPal payment should succeed");
+    }
+
+    @Test
+    void testPayPalPayment_InvalidEmail_Fail() {
+        Payment invalidPayPal = new PayPalPayment("invalidemail");
+        boolean result = invalidPayPal.processPayment(100.0);
+        assertFalse(result, "PayPal payment with invalid email should fail");
+    }
+}
+
+// ============================================
+// FILE: ProductBuilderTest.java
+// ============================================
+package com;
+
+import main.java.com.factory.builder.Product;
+import main.java.com.factory.builder.ProductBuilder;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
+
+public class ProductBuilderTest {
+
+    @Test
+    void testBuildProduct_ValidData_Success() {
+        Product product = new ProductBuilder()
+                .setId("P001")
+                .setName("Laptop")
+                .setPrice(999.99)
+                .setCategory("Electronics")
+                .setDescription("High-end laptop")
+                .build();
+
+        assertNotNull(product, "Product should not be null");
+        assertEquals("P001", product.getId());
+        assertEquals("Laptop", product.getName());
+        assertEquals(999.99, product.getPrice(), 0.01);
+        assertEquals("Electronics", product.getCategory());
+    }
+
+    @Test
+    void testBuildProduct_MissingId_Fail() {
+        assertThrows(IllegalArgumentException.class, () -> {
+            new ProductBuilder()
+                    .setName("Laptop")
+                    .setPrice(999.99)
+                    .build();
+        }, "Building product without ID should throw exception");
+    }
+
+    @Test
+    void testBuildProduct_NegativePrice_Fail() {
+        assertThrows(IllegalArgumentException.class, () -> {
+            new ProductBuilder()
+                    .setId("P001")
+                    .setName("Laptop")
+                    .setPrice(-999.99)
+                    .build();
+        }, "Building product with negative price should throw exception");
+    }
+
+    @Test
+    void testBuildProduct_ZeroPrice_Fail() {
+        assertThrows(IllegalArgumentException.class, () -> {
+            new ProductBuilder()
+                    .setId("P001")
+                    .setName("Laptop")
+                    .setPrice(0)
+                    .build();
+        }, "Building product with zero price should throw exception");
+    }
+}
+
+// ============================================
+// FILE: ProductDecoratorTest.java
+// ============================================
+package com;
+
+import main.java.com.factory.builder.Product;
+import main.java.com.factory.builder.ProductBuilder;
+import main.java.com.factory.decorator.*;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
+import static org.junit.jupiter.api.Assertions.*;
+
+public class ProductDecoratorTest {
+
+    private Product baseProduct;
+
+    @BeforeEach
+    void setUp() {
+        baseProduct = new ProductBuilder()
+                .setId("P001")
+                .setName("Laptop")
+                .setPrice(1000.0)
+                .setCategory("Electronics")
+                .build();
+    }
+
+    @Test
+    void testDiscountDecorator_Success() {
+        ProductPrice productPrice = new BasicProduct(baseProduct);
+        productPrice = new DiscountDecorator(productPrice, 10);
+
+        assertEquals(900.0, productPrice.getPrice(), 0.01, "Price should be discounted by 10%");
+        assertTrue(productPrice.getDescription().contains("Discount: 10%"));
+    }
+
+    @Test
+    void testTaxDecorator_Success() {
+        ProductPrice productPrice = new BasicProduct(baseProduct);
+        productPrice = new TaxDecorator(productPrice, 8);
+
+        assertEquals(1080.0, productPrice.getPrice(), 0.01, "Price should include 8% tax");
+        assertTrue(productPrice.getDescription().contains("Tax: 8%"));
+    }
+
+    @Test
+    void testMultipleDecorators_Success() {
+        ProductPrice productPrice = new BasicProduct(baseProduct);
+        productPrice = new DiscountDecorator(productPrice, 10);
+        productPrice = new TaxDecorator(productPrice, 8);
+
+        assertEquals(972.0, productPrice.getPrice(), 0.01, "Price should have discount then tax applied");
+    }
+
+    @Test
+    void testDiscountDecorator_FullDiscount_EdgeCase() {
+        ProductPrice productPrice = new BasicProduct(baseProduct);
+        productPrice = new DiscountDecorator(productPrice, 100);
+
+        assertEquals(0.0, productPrice.getPrice(), 0.01, "100% discount should result in 0 price");
+    }
+}
+
+// ============================================
+// FILE: ShippingStrategyTest.java
+// ============================================
+package com;
+
+import main.java.com.factory.strategy.*;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
+import static org.junit.jupiter.api.Assertions.*;
+
+public class ShippingStrategyTest {
+
+    private ShippingContext shippingContext;
+
+    @BeforeEach
+    void setUp() {
+        shippingContext = new ShippingContext();
+    }
+
+    @Test
+    void testStandardShipping_ValidData_Success() {
+        shippingContext.setShippingStrategy(new StandardShipping());
+        double cost = shippingContext.calculateCost(10.0, 50.0);
+
+        assertEquals(10.0, cost, 0.01, "Standard shipping cost should be calculated correctly");
+        assertEquals("Standard Shipping", shippingContext.getMethod());
+    }
+
+    @Test
+    void testExpressShipping_ValidData_Success() {
+        shippingContext.setShippingStrategy(new ExpressShipping());
+        double cost = shippingContext.calculateCost(10.0, 50.0);
+
+        assertEquals(30.0, cost, 0.01, "Express shipping cost should be calculated correctly");
+        assertEquals("Express Shipping", shippingContext.getMethod());
+    }
+
+    @Test
+    void testShipping_NegativeWeight_Fail() {
+        shippingContext.setShippingStrategy(new StandardShipping());
+        double cost = shippingContext.calculateCost(-5.0, 50.0);
+
+        assertEquals(0.0, cost, 0.01, "Negative weight should result in 0 cost");
+    }
+
+    @Test
+    void testShipping_NoStrategySet_Fail() {
+        assertThrows(IllegalStateException.class, () -> {
+            shippingContext.calculateCost(10.0, 50.0);
+        }, "Should throw exception when strategy is not set");
+    }
+}
+
+// ============================================
+// FILE: ObserverPatternTest.java
+// ============================================
+package com;
+
+import main.java.com.factory.observer.*;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
+import static org.junit.jupiter.api.Assertions.*;
+
+public class ObserverPatternTest {
+
+    private Order order;
+    private Customer customer1;
+    private Customer customer2;
+
+    @BeforeEach
+    void setUp() {
+        order = new Order("ORD001");
+        customer1 = new Customer("John Doe", "john@example.com");
+        customer2 = new Customer("Jane Smith", "jane@example.com");
+    }
+
+    @Test
+    void testAttachObserver_Success() {
+        order.attach(customer1);
+        order.updateStatus("Processing");
+
+        assertEquals("Processing", order.getStatus(), "Order status should be updated");
+    }
+
+    @Test
+    void testMultipleObservers_Success() {
+        order.attach(customer1);
+        order.attach(customer2);
+        order.updateStatus("Shipped");
+
+        assertEquals("Shipped", order.getStatus(), "Order status should be updated");
+    }
+
+    @Test
+    void testDetachObserver_Success() {
+        order.attach(customer1);
+        order.attach(customer2);
+        order.detach(customer1);
+        order.updateStatus("Delivered");
+
+        assertEquals("Delivered", order.getStatus());
+    }
+
+    @Test
+    void testOrderInitialStatus_Success() {
+        assertEquals("Created", order.getStatus(), "Initial status should be 'Created'");
+        assertEquals("ORD001", order.getOrderId());
+    }
+}
+
+// ============================================
+// FILE: SingletonPatternTest.java
+// ============================================
+package com;
+
+import main.java.com.factory.singleton.DatabaseConnection;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
+
+public class SingletonPatternTest {
+
+    @Test
+    void testSingletonInstance_Success() {
+        DatabaseConnection db1 = DatabaseConnection.getInstance();
+        DatabaseConnection db2 = DatabaseConnection.getInstance();
+
+        assertSame(db1, db2, "Both instances should be the same");
+        assertTrue(db1.isConnected(), "Database should be connected");
+    }
+
+    @Test
+    void testSingletonConnection_Success() {
+        DatabaseConnection db = DatabaseConnection.getInstance();
+
+        assertTrue(db.isConnected(), "Database connection should be established");
+    }
+}
+
+// ============================================
+// FILE: ShoppingCartTest.java
+// ============================================
+package com;
+
+import main.java.com.factory.builder.Product;
+import main.java.com.factory.builder.ProductBuilder;
+import main.java.com.factory.util.ShoppingCart;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
+import static org.junit.jupiter.api.Assertions.*;
+
+public class ShoppingCartTest {
+
+    private ShoppingCart cart;
+    private Product product1;
+    private Product product2;
+
+    @BeforeEach
+    void setUp() {
+        cart = new ShoppingCart();
+        product1 = new ProductBuilder()
+                .setId("P001")
+                .setName("Laptop")
+                .setPrice(1000.0)
+                .setCategory("Electronics")
+                .build();
+        product2 = new ProductBuilder()
+                .setId("P002")
+                .setName("Mouse")
+                .setPrice(25.0)
+                .setCategory("Accessories")
+                .build();
+    }
+
+    @Test
+    void testAddProduct_Success() {
+        cart.addProduct(product1);
+        cart.addProduct(product2);
+
+        assertEquals(2, cart.getItemCount(), "Cart should contain 2 items");
+        assertEquals(1025.0, cart.getTotalPrice(), 0.01, "Total should be 1025");
+    }
+
+    @Test
+    void testRemoveProduct_Success() {
+        cart.addProduct(product1);
+        cart.addProduct(product2);
+        cart.removeProduct(product1);
+
+        assertEquals(1, cart.getItemCount(), "Cart should contain 1 item");
+        assertEquals(25.0, cart.getTotalPrice(), 0.01, "Total should be 25");
+    }
+
+    @Test
+    void testAddNullProduct_Fail() {
+        assertThrows(IllegalArgumentException.class, () -> {
+            cart.addProduct(null);
+        }, "Adding null product should throw exception");
+    }
+
+    @Test
+    void testClearCart_Success() {
+        cart.addProduct(product1);
+        cart.addProduct(product2);
+        cart.clear();
+
+        assertEquals(0, cart.getItemCount(), "Cart should be empty");
+        assertEquals(0.0, cart.getTotalPrice(), 0.01, "Total should be 0");
+    }
+}

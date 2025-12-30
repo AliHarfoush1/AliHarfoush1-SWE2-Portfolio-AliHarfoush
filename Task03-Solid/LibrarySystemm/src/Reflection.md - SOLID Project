@@ -1,0 +1,75 @@
+ # Reflection
+
+ ## What I Learned
+
+ **SOLID Principles in Practice:**
+ - **S:** Each class should do ONE thing only
+ - **O:** Add features without breaking old code
+ - **L:** Child classes must work like parent
+ - **I:** Small interfaces better than big ones
+ - **D:** Use interfaces, not concrete classes
+
+ **Key Insights:**
+ - Interfaces make code flexible
+ - Can swap implementations easily (Email → SMS)
+ - Each principle solves a specific problem
+ - SOLID makes code easier to maintain and extend
+
+ ---
+
+ ## What Was Challenging
+
+ **Understanding Dependency Inversion:**
+ - Confused about "depend on abstractions"
+ - Realized it means use interfaces as parameters
+ - Example: `Library(Notifiable n)` not `Library(EmailNotifier n)`
+
+ **Applying All Principles Together:**
+ - Hard to see how they work together
+ - Each principle complements the others
+ - Started to see the bigger picture
+
+ **Deciding Responsibilities:**
+ - When to split a class?
+ - If it does more than one thing → split it
+ - Example: Library shouldn't generate reports
+
+ ---
+
+ ## What I Improved from Previous Tasks
+
+ **Task 1 (Vehicle System):**
+ - Basic inheritance and interfaces
+ - Simple class structure
+
+ **Task 2 (Workshop System):**
+ - Added design patterns
+ - Better code organization
+
+ **Task 3 (Library System):**
+ - **Focused on SOLID principles**
+ - **Clear separation of responsibilities**
+ - **More interfaces for flexibility**
+ - **Better dependency management**
+
+ **Specific Improvements:**
+ - Task 1: Used concrete classes everywhere
+ - Task 3: Use interfaces for dependencies
+
+ - Task 2: Some classes did multiple things
+ - Task 3: Each class has single responsibility
+
+ - Task 1&2: Hard to add new features
+ - Task 3: Easy to extend (just add new class)
+
+ ---
+
+ ## Main Takeaway
+
+ SOLID principles make code:
+ - **Easier to understand** - clear responsibilities
+ - **Easier to change** - modify one thing without breaking others
+ - **Easier to extend** - add features without changing existing code
+ - **Easier to test** - small focused classes
+
+ The key is: **Think about design before coding.**
