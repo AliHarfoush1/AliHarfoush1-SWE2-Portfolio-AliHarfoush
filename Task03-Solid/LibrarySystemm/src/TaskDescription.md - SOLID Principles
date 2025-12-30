@@ -1,0 +1,43 @@
+ # Task: Library Management System
+
+ ## Overview
+ Simple library system demonstrating all SOLID principles.
+
+ ## System Features
+ - Add/remove books
+ - Borrow/return books
+ - Different user types (Student, Teacher)
+ - Multiple notification methods (Email, SMS)
+ - Generate reports
+
+ ## SOLID Principles Demonstrated
+
+ ### S - Single Responsibility
+ Each class has ONE job:
+ - `Book` - stores book data
+ - `Library` - manages books
+ - `EmailNotifier` - sends emails only
+ - `ReportGenerator` - creates reports only
+
+ ### O - Open/Closed
+ Can add new features without changing existing code:
+ - Add new user types (Guest, Admin)
+ - Add new notifiers (WhatsApp, Push)
+ - Add new report formats (PDF, Excel)
+
+ ### L - Liskov Substitution
+ Any user type works the same way:
+ - `User user = new Student()`
+ - `User user = new Teacher()`
+ - Both can borrow books
+
+ ### I - Interface Segregation
+ Small focused interfaces:
+ - `Borrowable` - only borrow/return
+ - `Notifiable` - only send message
+ - `Reportable` - only generate report
+
+ ### D - Dependency Inversion
+ Classes depend on interfaces not concrete classes:
+ - `Library` uses `Notifiable` not `EmailNotifier`
+ - Can swap Email with SMS easily
